@@ -95,6 +95,28 @@
   --header-from: var(--blue-900);
   --header-to: var(--blue-700);
 
+  /* Header furniture — translucent whites that need different opacities on a
+     darker ground to hold 4.5:1. Tokenised so the dark palette stays a pure
+     token list with no component rules to keep in sync. */
+  --header-sub: rgba(255, 255, 255, 0.72);
+  --header-note: rgba(255, 255, 255, 0.75);
+  --stat-text: rgba(255, 255, 255, 0.82);
+  --stat-bg: rgba(255, 255, 255, 0.12);
+  --stat-border: rgba(255, 255, 255, 0.18);
+  --stat-total-bg: rgba(255, 255, 255, 0.22);
+  --stat-overdue-bg: rgba(255, 138, 138, 0.22);
+  --stat-overdue-border: rgba(255, 160, 160, 0.5);
+  --header-ctl-border: rgba(255, 255, 255, 0.45);
+
+  /* Accent-filled controls. On dark the fill lightens, so the text on it has
+     to flip from white to near-black to stay legible. */
+  --accent-bg: var(--blue-600);
+  --accent-text: #ffffff;
+  --accent-hover: var(--blue-700);
+  --badge-bg: var(--blue-800);
+  --badge-text: #ffffff;
+  --card-actions-border: var(--surface-alt);
+
   --focus: #2b7de0;
 
   /* Spacing scale */
@@ -196,7 +218,7 @@ textarea:focus-visible,
 .brand-sub {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--header-sub);
 }
 
 .header-spacer { flex: 1 1 auto; }
@@ -215,17 +237,17 @@ textarea:focus-visible,
   display: inline-flex;
   align-items: baseline;
   gap: var(--space-2);
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
   border-radius: 999px;
   padding: var(--space-1) var(--space-3);
   font-size: 13px;
 }
 .stat-value { font-weight: 700; font-size: 15px; }
-.stat-label { color: rgba(255, 255, 255, 0.82); }
+.stat-label { color: var(--stat-text); }
 
-.stat-overdue { background: rgba(255, 138, 138, 0.22); border-color: rgba(255, 160, 160, 0.5); }
-.stat-total   { background: rgba(255, 255, 255, 0.22); }
+.stat-overdue { background: var(--stat-overdue-bg); border-color: var(--stat-overdue-border); }
+.stat-total   { background: var(--stat-total-bg); }
 
 .stat-filtered {
   background: transparent;
@@ -237,7 +259,7 @@ textarea:focus-visible,
   max-width: 1600px;
   margin: var(--space-3) auto 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--header-note);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -274,13 +296,13 @@ textarea:focus-visible,
 .btn-primary:hover { background: var(--btn-primary-hover); }
 
 .btn-submit {
-  background: var(--blue-600);
-  color: var(--on-accent);
-  border-color: var(--blue-600);
+  background: var(--accent-bg);
+  color: var(--accent-text);
+  border-color: var(--accent-bg);
   width: 100%;
   padding: var(--space-3) var(--space-4);
 }
-.btn-submit:hover { background: var(--blue-700); border-color: var(--blue-700); }
+.btn-submit:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .btn-submit[disabled] {
   background: var(--border-strong);
   border-color: var(--border-strong);
@@ -390,8 +412,8 @@ textarea:focus-visible,
   height: 22px;
   padding: 0 var(--space-2);
   border-radius: 999px;
-  background: var(--blue-800);
-  color: var(--on-accent);
+  background: var(--badge-bg);
+  color: var(--badge-text);
   font-size: 12px;
   font-weight: 700;
   display: inline-flex;
@@ -531,7 +553,7 @@ textarea:focus-visible,
   align-items: center;
   gap: var(--space-2);
   padding-top: var(--space-2);
-  border-top: 1px solid var(--surface-alt);
+  border-top: 1px solid var(--card-actions-border);
 }
 
 .icon-btn {
@@ -758,19 +780,32 @@ textarea:focus-visible,
 
 /* ============================================================
    12. DARK THEME
-   Follows the operating system via prefers-color-scheme. There is no
-   toggle and no stored preference on purpose: this file is barred from
-   localStorage/sessionStorage/cookies, so a toggle could not survive the
-   refresh and would contradict the "nothing is saved" promise in the header.
 
-   Only tokens are restated below — no component rule is duplicated. The
-   values are desaturated tonal variants rather than inversions of the light
-   palette, and every text pair was measured: body >= 13:1, muted text >= 6.6:1,
-   every priority pill >= 6.6:1, focus ring and input borders >= 3:1 against
+   Two ways in, one palette:
+
+     - the OS setting, via prefers-color-scheme, which is the default; and
+     - the header's Theme button, which writes data-theme onto <html> and
+       overrides the OS in either direction.
+
+   The button's choice is held in memory only. This file is barred from
+   localStorage/sessionStorage/cookies, so the theme resets on refresh — the
+   same way the eight seeded tasks do, which the header already tells you.
+
+   The palette below is restated under two selectors because CSS cannot union
+   a media query with an attribute selector. THE TWO LISTS MUST STAY IN SYNC.
+   They are tokens only — no component rule is duplicated — so anything new
+   must reach for a token rather than a literal colour, or it will be correct
+   in one theme and wrong in the other.
+
+   Every pair is measured: body text >= 13:1, muted text >= 6.6:1, every
+   priority pill >= 6.6:1, focus rings and input borders >= 3:1 against
    whichever surface sits behind them.
    ============================================================ */
+
+/* Follows the OS — unless the button has explicitly asked for light. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     /* Blues — lifted so they read as accents on a dark ground */
     --blue-900: #07121f;
     --blue-800: #2e6fbf;
@@ -821,32 +856,137 @@ textarea:focus-visible,
     --header-from: #07121f;
     --header-to: #0d2b4c;
 
-    --focus: #6cb2ff;
+    /* Header whites need more opacity on the darker ground to hold 4.5:1
+       (measured 11.5:1, 12.4:1 and 9.4:1 by sampling rendered pixels). */
+    --header-sub: rgba(255, 255, 255, 0.78);
+    --header-note: rgba(255, 255, 255, 0.80);
+    --stat-text: rgba(255, 255, 255, 0.88);
+    --stat-bg: rgba(255, 255, 255, 0.10);
+    --stat-border: rgba(255, 255, 255, 0.16);
+    --stat-total-bg: rgba(255, 255, 255, 0.16);
+    --stat-overdue-bg: rgba(255, 138, 138, 0.18);
+    --stat-overdue-border: rgba(255, 156, 156, 0.45);
+    --header-ctl-border: rgba(255, 255, 255, 0.45);
+
+    /* #0f1520 on #84bcff is 9.25:1; white on the same fill would be 2.2:1 */
+    --accent-bg: var(--blue-500);
+    --accent-text: #0f1520;
+    --accent-hover: #a8cfff;
+    --badge-bg: var(--blue-500);
+    --badge-text: #0f1520;
+    --card-actions-border: var(--border);
 
     /* Shadows carry less weight on dark; lean on the borders instead */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.65);
   }
-
-  /* The header's translucent whites need a touch more opacity on a darker
-     ground to hold 4.5:1 (measured 9.2:1 and 9.7:1 at these values). */
-  .brand-sub { color: rgba(255, 255, 255, 0.78); }
-  .demo-note { color: rgba(255, 255, 255, 0.80); }
-  .stat-label { color: rgba(255, 255, 255, 0.88); }
-  .stat { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.16); }
-  .stat-total { background: rgba(255, 255, 255, 0.16); }
-  .stat-overdue { background: rgba(255, 138, 138, 0.18); border-color: rgba(255, 156, 156, 0.45); }
-
-  /* Accent-filled controls take dark text: #0f1520 on #84bcff is 9.25:1,
-     where white on the same fill would be only 2.2:1. */
-  .count-badge, .btn-submit { color: #0f1520; }
-  .count-badge { background: var(--blue-500); }
-  .btn-submit { background: var(--blue-500); border-color: var(--blue-500); }
-  .btn-submit:hover { background: #a8cfff; border-color: #a8cfff; }
-
-  .card-actions { border-top-color: var(--border); }
 }
+
+/* The button asked for dark, whatever the OS says. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  /* Blues — lifted so they read as accents on a dark ground */
+  --blue-900: #07121f;
+  --blue-800: #2e6fbf;
+  --blue-700: #0d2b4c;
+  --blue-600: #2e6fbf;
+  --blue-500: #84bcff;
+  --blue-100: #1c3350;
+  --blue-050: #16283e;
+
+  /* Neutrals — card lifts off the column, column off the page */
+  --bg: #0f1520;
+  --column-bg: #131c29;
+  --surface: #1b2534;
+  --surface-alt: #222d3e;
+  --border: #2e3b4f;
+  --border-strong: #63758f;   /* 3.29:1 on the card — keeps inputs identifiable */
+  --text: #e8edf5;
+  --text-muted: #a7b4c6;
+  --text-faint: #a7b4c6;    /* faint tier collapses into muted; dark has less room */
+
+  /* Signals — lighter tonal variants on deep tinted grounds */
+  --critical: #ff9c9c;
+  --critical-bg: #3b2024;
+  --high: #f2ac57;
+  --high-bg: #3a2b16;
+  --medium: #84bcff;
+  --medium-bg: #16283e;
+  --low: #aab6c8;
+  --low-bg: #242e3d;
+  --success: #5fd79a;
+  --success-bg: #11301f;
+  --warn: #f3b45f;
+  --warn-bg: #33260f;
+
+  --critical-border: #6b3238;
+  --high-border: #5d4523;
+  --medium-border: #2b4a70;
+  --low-border: #3a4658;
+  --critical-hover: #ffb8b8;
+  --success-text: #5fd79a;
+  --warn-text: #f3b45f;
+
+  --backdrop: rgba(3, 8, 16, 0.72);
+  --btn-primary-bg: #e8edf5;
+  --btn-primary-text: #0d2b4c;
+  --btn-primary-hover: #ffffff;
+  --on-accent: #ffffff;
+  --header-from: #07121f;
+  --header-to: #0d2b4c;
+
+  /* Header whites need more opacity on the darker ground to hold 4.5:1
+     (measured 11.5:1, 12.4:1 and 9.4:1 by sampling rendered pixels). */
+  --header-sub: rgba(255, 255, 255, 0.78);
+  --header-note: rgba(255, 255, 255, 0.80);
+  --stat-text: rgba(255, 255, 255, 0.88);
+  --stat-bg: rgba(255, 255, 255, 0.10);
+  --stat-border: rgba(255, 255, 255, 0.16);
+  --stat-total-bg: rgba(255, 255, 255, 0.16);
+  --stat-overdue-bg: rgba(255, 138, 138, 0.18);
+  --stat-overdue-border: rgba(255, 156, 156, 0.45);
+  --header-ctl-border: rgba(255, 255, 255, 0.45);
+
+  /* #0f1520 on #84bcff is 9.25:1; white on the same fill would be 2.2:1 */
+  --accent-bg: var(--blue-500);
+  --accent-text: #0f1520;
+  --accent-hover: #a8cfff;
+  --badge-bg: var(--blue-500);
+  --badge-text: #0f1520;
+  --card-actions-border: var(--border);
+
+  /* Shadows carry less weight on dark; lean on the borders instead */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.65);
+}
+
+/* The button asked for light, whatever the OS says. */
+:root[data-theme="light"] { color-scheme: light; }
+
+/* Theme button. It sits on the header gradient, not on a white surface, so it
+   cannot borrow .btn-ghost — those muted greys measured 1.81:1 against the
+   blue. It takes the same translucent-white treatment as the .stat chips
+   instead: white text is 14.3:1 on the light-theme gradient and higher on the
+   dark one. */
+.theme-btn {
+  gap: var(--space-2);
+  background: var(--stat-bg);
+  border-color: var(--header-ctl-border);
+  color: var(--on-accent);
+}
+.theme-btn:hover {
+  background: var(--stat-total-bg);
+  border-color: var(--header-ctl-border);
+  color: var(--on-accent);
+}
+.theme-btn svg { flex: 0 0 auto; }
+.theme-icon { display: none; }
+:root:not([data-theme]) .theme-icon-system,
+:root[data-theme="light"] .theme-icon-light,
+:root[data-theme="dark"] .theme-icon-dark { display: inline; }
+
 </style>
 </head>
 
@@ -863,6 +1003,18 @@ textarea:focus-visible,
       <p class="brand-sub">Internal demo &amp; training tool — not an official system</p>
     </div>
     <span class="header-spacer"></span>
+    <button type="button" id="theme-btn" class="btn theme-btn" aria-live="polite">
+      <svg class="theme-icon theme-icon-system" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.6v10.8a5.4 5.4 0 010-10.8z"/>
+      </svg>
+      <svg class="theme-icon theme-icon-light" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 4.6A3.4 3.4 0 108 11.4 3.4 3.4 0 008 4.6zm0-4.1a.8.8 0 01.8.8v1a.8.8 0 01-1.6 0v-1A.8.8 0 018 .5zm0 12.8a.8.8 0 01.8.8v1a.8.8 0 01-1.6 0v-1a.8.8 0 01.8-.8zM.5 8a.8.8 0 01.8-.8h1a.8.8 0 010 1.6h-1A.8.8 0 01.5 8zm12.8 0a.8.8 0 01.8-.8h1a.8.8 0 010 1.6h-1a.8.8 0 01-.8-.8zM2.7 2.7a.8.8 0 011.1 0l.7.7a.8.8 0 01-1.1 1.1l-.7-.7a.8.8 0 010-1.1zm8.8 8.8a.8.8 0 011.1 0l.7.7a.8.8 0 01-1.1 1.1l-.7-.7a.8.8 0 010-1.1zm1.8-8.8a.8.8 0 010 1.1l-.7.7a.8.8 0 01-1.1-1.1l.7-.7a.8.8 0 011.1 0zM4.5 11.5a.8.8 0 010 1.1l-.7.7a.8.8 0 01-1.1-1.1l.7-.7a.8.8 0 011.1 0z"/>
+      </svg>
+      <svg class="theme-icon theme-icon-dark" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M13.5 10.2A5.8 5.8 0 015.8 2.5a5.8 5.8 0 107.7 7.7z"/>
+      </svg>
+      <span id="theme-label">System</span>
+    </button>
     <button type="button" id="add-task-btn" class="btn btn-primary">
       <span aria-hidden="true">+</span> Add Task
     </button>
@@ -1071,8 +1223,36 @@ const state = {
   confirmingDelete: null,    // task id currently showing "Delete? Yes / No"
   openMoveMenu: null,        // task id currently showing the Move menu
   refocus: null,             // data-focus key to restore focus to after a render
-  sendTimes: []              // epoch ms of recent notifications — in-memory rate limit
+  sendTimes: [],             // epoch ms of recent notifications — in-memory rate limit
+  theme: "system"            // "system" | "light" | "dark" — in memory, resets on refresh
 };
+
+/* Theme. "system" removes the attribute entirely and lets the
+   prefers-color-scheme block decide, so the board keeps tracking the OS live
+   if the user changes it. The other two pin the palette explicitly.
+
+   Deliberately not persisted: this file may not touch localStorage, so the
+   choice lasts for the session and resets on refresh, exactly like the tasks.
+   This is the third documented write outside renderBoard(), alongside the
+   .drag-over class and toast insertion. */
+const THEME_ORDER = ["system", "light", "dark"];
+const THEME_LABELS = { system: "System", light: "Light", dark: "Dark" };
+
+function applyTheme() {
+  const root = document.documentElement;
+  if (state.theme === "system") root.removeAttribute("data-theme");
+  else root.setAttribute("data-theme", state.theme);
+
+  const next = THEME_ORDER[(THEME_ORDER.indexOf(state.theme) + 1) % THEME_ORDER.length];
+  document.getElementById("theme-label").textContent = THEME_LABELS[state.theme];
+  els.themeBtn.setAttribute("aria-label",
+    "Colour theme: " + THEME_LABELS[state.theme] + ". Activate for " + THEME_LABELS[next] + ".");
+}
+
+function cycleTheme() {
+  state.theme = THEME_ORDER[(THEME_ORDER.indexOf(state.theme) + 1) % THEME_ORDER.length];
+  applyTheme();
+}
 
 /* Outbound notifications are capped per page session. This is an abuse-blast
    limiter, not a security control: it lives in memory, resets on refresh, and
@@ -1100,7 +1280,8 @@ const els = {
   addBtn: document.getElementById("add-task-btn"),
   closeBtn: document.getElementById("modal-close-btn"),
   filterForm: document.getElementById("filter-form"),
-  clearFiltersBtn: document.getElementById("clear-filters-btn")
+  clearFiltersBtn: document.getElementById("clear-filters-btn"),
+  themeBtn: document.getElementById("theme-btn")
 };
 
 /* ============================================================
@@ -1915,6 +2096,9 @@ function bindEvents() {
   els.filterForm.addEventListener("change", handleFilterChange);
   els.clearFiltersBtn.addEventListener("click", clearFilters);
 
+  /* Theme */
+  els.themeBtn.addEventListener("click", cycleTheme);
+
   /* Modal */
   els.addBtn.addEventListener("click", openModal);
   els.closeBtn.addEventListener("click", closeModal);
@@ -1937,6 +2121,7 @@ function bindEvents() {
    INIT
    ============================================================ */
 function init() {
+  applyTheme();
   populateSelects();
   seedTasks();
   bindEvents();

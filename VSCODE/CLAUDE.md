@@ -38,24 +38,43 @@ These are verified, and each one silently blocks an obvious approach:
 
 ### Theming
 
-The board ships light and dark palettes. Dark follows the OS through
-`@media (prefers-color-scheme: dark)` — **there is no toggle, on purpose**: the
-no-persistence rule above bars the storage a toggle would need, so a preference
-could not survive a refresh and would contradict the "nothing is saved" promise
-in the header. A session-only toggle is possible but was judged worse than
-following the OS.
+The board ships light and dark palettes, reachable two ways:
 
-Section 12 of the stylesheet restates **tokens only** — no component rule is
-duplicated across themes. Anything new must therefore reach for a token rather
-than a literal colour, or it will look correct in one theme and wrong in the
-other. `color-scheme: light dark` on `:root` is what makes the native date
-picker, selects and scrollbars follow along.
+- **the OS setting**, via `prefers-color-scheme`, which is the default; and
+- **the header's Theme button**, which cycles System → Light → Dark and writes
+  `data-theme` onto `<html>` to override the OS in either direction.
+
+The button's choice is held in `state.theme` **in memory only**. The
+no-persistence rule above bars the storage it would need, so the theme resets
+on refresh — the same way the eight seeded tasks do, which the header already
+says. Writing `data-theme` is the **third documented write outside
+`renderBoard()`**, alongside the `.drag-over` class and toast insertion.
+
+Section 12 of the stylesheet restates the palette under two selectors, because
+CSS cannot union a media query with an attribute selector:
+`@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) }` and
+`:root[data-theme="dark"]`. **Those two token lists must be kept in sync.**
+They are tokens only — no component rule is duplicated — so anything new must
+reach for a token rather than a literal colour, or it will be correct in one
+theme and wrong in the other. `color-scheme` is set per theme so the native
+date picker, selects and scrollbars follow along.
 
 Both palettes are contrast-verified: body text ≥ 13:1 dark / ≥ 16:1 light, muted
 text ≥ 5.4:1, every priority pill ≥ 4.8:1, and focus rings plus input borders
 ≥ 3:1 against whichever surface sits behind them. Re-measure after changing any
 colour — the light palette previously shipped three pairs below 4.5:1
 (`.meta-key`, `.pill-low`, `.pill-high`) and an input border at 1.77:1.
+
+Two traps when measuring, both of which produced wrong answers here first time:
+
+- **Anything on the header gradient.** `background-color` is transparent there,
+  so a script that walks up looking for an opaque ancestor sails past and
+  compares against the page background instead. The Theme button shipped at
+  1.81:1 for exactly this reason — `.btn-ghost`'s muted grey on dark blue —
+  and the automated sweep called it a pass. Composite the translucent fill over
+  both gradient stops by hand, or sample rendered pixels.
+- **Playwright screenshots** of this page hang on the stability wait unless you
+  pass `animations: 'disabled'`.
 
 ### Architecture
 

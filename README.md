@@ -43,16 +43,18 @@ Live at [/VSCODE/](https://binunair82.github.io/Claude-training/VSCODE/).
 - New-task dialog with field-level validation and ARIA error wiring
 - Toast notifications through a polite live region
 - Responsive: columns stack below 768px
-- **Light and dark themes**, following the operating system via
-  `prefers-color-scheme`. There is no toggle on purpose — see below
+- **Light and dark themes** — a Theme button in the header cycles
+  System → Light → Dark, and System follows the operating system
 
 ### Theming
 
-Dark mode follows the OS rather than offering a toggle, because a toggle needs
-somewhere to remember the choice and this file is barred from `localStorage`
-(see the constraints below). A preference that silently resets on every refresh
-would contradict the "nothing is saved" promise in the header, so the OS setting
-wins.
+The header's **Theme** button cycles System → Light → Dark. *System* follows the
+operating system's appearance setting; the other two override it in either
+direction, so you can read the board in dark on a machine set to light.
+
+The choice lives in memory and **resets on refresh**, because this file is
+barred from `localStorage` (see the constraints below) — the same way the eight
+seeded tasks reset, which the header already tells you.
 
 Only design tokens are restated for dark — no component rule is duplicated —
 so new UI must use a token rather than a literal colour to work in both themes.
