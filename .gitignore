@@ -28,3 +28,7 @@ cert_injection_backups/
 
 # Playwright MCP scratch output (snapshots, console logs)
 .playwright-mcp/
+
+# Skills installed by `npx skills add` — the vendored copy stays local; the
+# lockfile is committed so anyone can reinstall the same pinned versions.
+.agents/

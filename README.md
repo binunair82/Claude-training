@@ -28,6 +28,7 @@ The landing page at the repository root:
 | `VSCODE/CLAUDE.md` | Working notes and constraints for the board (architecture, verification recipe) |
 | `.github/workflows/pages.yml` | Deploys the repository to GitHub Pages on every push to `main` |
 | `docs/screenshots/` | Screenshots of the live site, captured from the deployed Pages URL |
+| `skills-lock.json` | Pinned versions of the Claude Code skills this repo was built with — run `npx skills add` to reinstall them |
 
 ## The Kanban board
 

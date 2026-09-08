@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-kanban": {
+      "source": "saltbo/agent-kanban",
+      "sourceType": "github",
+      "skillPath": "skills/agent-kanban/SKILL.md",
+      "computedHash": "0c8e12b670d90fde0403f0a6eb321da7a89df1aa485bf4b257ca880b8a3834e2"
+    },
+    "cybersecurity-analyst": {
+      "source": "rysweet/amplihack",
+      "sourceType": "github",
+      "skillPath": "skills/cybersecurity-analyst/SKILL.md",
+      "computedHash": "4f804565a002629ad80e311b460d710783af11bfddda5ddecee18c4b8f54cc0e"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "4080ff883b26b670a5a224fb332e89ecc15319535f4d14279947ad7812fec558"
+    }
+  }
+}
