@@ -6,6 +6,16 @@ double-clicking the file.
 
 **Live site:** https://binunair82.github.io/Claude-training/
 
+## Screenshots
+
+The Kanban board at [/VSCODE/](https://binunair82.github.io/Claude-training/VSCODE/):
+
+![UOB IT PMO Project Board — four columns of task cards with filters and a board summary](docs/screenshots/kanban-board.png)
+
+The landing page at the repository root:
+
+![Claude Training landing page listing the demo builds](docs/screenshots/landing.png)
+
 ## What's inside
 
 | Path | What it is |
@@ -14,6 +24,7 @@ double-clicking the file.
 | `VSCODE/index.html` | **UOB IT PMO Project Board** — a Kanban board in a single 1,785-line file |
 | `VSCODE/CLAUDE.md` | Working notes and constraints for the board (architecture, verification recipe) |
 | `.github/workflows/pages.yml` | Deploys the repository to GitHub Pages on every push to `main` |
+| `docs/screenshots/` | Screenshots of the live site, captured from the deployed Pages URL |
 
 ## The Kanban board
 

@@ -1,8 +1,9 @@
 # macOS
 .DS_Store
 
-# Local editor / tool state
-.claude/
+# Local editor / tool state — but keep the shared slash commands under version control
+.claude/*
+!.claude/commands/
 .vscode/
 
 # Certificate Injection Utility — kept local, never published.
@@ -24,3 +25,6 @@ cert_injection_backups/
 .env
 .env.*
 !.env.example
+
+# Playwright MCP scratch output (snapshots, console logs)
+.playwright-mcp/
