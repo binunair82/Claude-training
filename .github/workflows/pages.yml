@@ -1,15 +1,16 @@
-name: Deploy VSCODE/ to GitHub Pages
+name: Deploy to GitHub Pages
 
-# GitHub Pages can only serve a branch root or /docs directly. To publish
-# VSCODE/ without moving it, this workflow uploads that folder as the Pages
-# artifact, which makes VSCODE/index.html the site root.
+# Publishes the whole repository as the Pages site: index.html at the root is
+# the landing page, and the Kanban board stays reachable at /VSCODE/.
+#
+# Pages must already be enabled with its source set to "GitHub Actions"
+# (Settings -> Pages). Doing that from here is not possible: GITHUB_TOKEN
+# cannot create a Pages site, so configure-pages with enablement:true fails
+# with "Resource not accessible by integration".
 
 on:
   push:
     branches: [main]
-    paths:
-      - "VSCODE/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -33,16 +34,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure Pages
-        # enablement:true switches the repo's Pages source to GitHub Actions
-        # on the first run, so no manual step in Settings is needed.
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
-      - name: Upload VSCODE/ as the site
+      - name: Upload the repository as the site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: VSCODE
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment

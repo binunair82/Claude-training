@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Training — Project Index</title>
+<style>
+  :root {
+    --bg: #eef1f6; --surface: #ffffff; --surface-alt: #f7f9fc;
+    --border: #d6dde8; --border-strong: #b8c4d4;
+    --text: #16202e; --text-muted: #5b6b80; --accent: #1560bd; --accent-bg: #e4eefb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55; padding: 3rem 1.25rem 4rem;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  header { margin-bottom: 2.25rem; }
+  h1 { font-size: 1.65rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+  .lede { color: var(--text-muted); margin: 0; font-size: 0.98rem; }
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.35rem 1.5rem; margin-bottom: 1rem;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card h2 { font-size: 1.05rem; margin: 0 0 0.35rem; color: var(--accent); }
+  .card p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+  .tag {
+    display: inline-block; background: var(--accent-bg); color: var(--accent);
+    border-radius: 999px; padding: 0.12rem 0.6rem; font-size: 0.72rem;
+    font-weight: 600; margin-left: 0.5rem; vertical-align: 2px;
+  }
+  .note {
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-left: 3px solid var(--border-strong);
+    border-radius: 8px; padding: 0.9rem 1.1rem; margin-top: 2rem;
+    font-size: 0.85rem; color: var(--text-muted);
+  }
+  footer { margin-top: 2.5rem; font-size: 0.82rem; color: var(--text-muted); }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Claude Training</h1>
+    <p class="lede">Self-contained demo builds — no frameworks, no build step, no dependencies.</p>
+  </header>
+
+  <main>
+    <a class="card" href="VSCODE/">
+      <h2>UOB IT PMO — Project Board <span class="tag">Live demo</span></h2>
+      <p>A Kanban board in a single HTML file: drag-and-drop with a keyboard-accessible
+         fallback, filtering, overdue highlighting and inline delete confirmation.</p>
+    </a>
+  </main>
+
+  <p class="note">
+    The board holds no data between visits — there is no localStorage, no database and no
+    back end, so a refresh deliberately restores the seeded tasks. That is intended
+    behaviour for a training demo, not a bug.
+  </p>
+
+  <footer>
+    Source: <a href="https://github.com/binunair82/Claude-training">github.com/binunair82/Claude-training</a>
+  </footer>
+</div>
+</body>
+</html>
