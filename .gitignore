@@ -4,3 +4,23 @@
 # Local editor / tool state
 .claude/
 .vscode/
+
+# Certificate Injection Utility — kept local, never published.
+# The folder holds a private key (key.pem), a Java keystore (mykeystore.jks)
+# and run logs containing local absolute paths.
+SSL/
+
+# Key material and generated crypto artifacts, wherever they appear
+*.pem
+*.key
+*.jks
+*.keystore
+*.p12
+*.pfx
+cert_injection.log
+cert_injection_backups/
+
+# Environment files (never commit real values; commit .env.example instead)
+.env
+.env.*
+!.env.example
