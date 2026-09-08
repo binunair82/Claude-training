@@ -39,6 +39,47 @@ Live at [/VSCODE/](https://binunair82.github.io/Claude-training/VSCODE/).
 - New-task dialog with field-level validation and ARIA error wiring
 - Toast notifications through a polite live region
 - Responsive: columns stack below 768px
+- **Light and dark themes**, following the operating system via
+  `prefers-color-scheme`. There is no toggle on purpose — see below
+
+### Theming
+
+Dark mode follows the OS rather than offering a toggle, because a toggle needs
+somewhere to remember the choice and this file is barred from `localStorage`
+(see the constraints below). A preference that silently resets on every refresh
+would contradict the "nothing is saved" promise in the header, so the OS setting
+wins.
+
+Only design tokens are restated for dark — no component rule is duplicated —
+so new UI must use a token rather than a literal colour to work in both themes.
+Both palettes are contrast-measured: body text ≥ 13:1, muted text ≥ 5.4:1, every
+priority pill ≥ 4.8:1, and focus rings and input borders ≥ 3:1 against whatever
+sits behind them.
+
+### Security
+
+- A **Content-Security-Policy** meta tag pins outbound requests to the single
+  FormSubmit host and gives `default-src 'none'` for everything else, so an
+  injected `<img>` or `<script src>` cannot load or beacon data out. Verified in
+  a browser: FormSubmit allowed, all other hosts blocked. `'unsafe-inline'` is
+  unavoidable given the one-file design, which is why the escaping below carries
+  the primary load.
+- Every user string passes through `escapeHtml()` before reaching `innerHTML`,
+  with all attribute values quoted.
+- Outbound notifications are **capped at 5 per minute** per page session, in
+  memory. That is an abuse limiter, not a security control — it resets on
+  refresh and cannot stop a direct POST to the endpoint.
+- `frame-ancestors` is deliberately omitted: browsers ignore it in a meta tag
+  and GitHub Pages cannot set response headers, so claiming clickjacking cover
+  here would be false.
+
+> [!IMPORTANT]
+> **The notification address is public.** `FORMSUBMIT_ENDPOINT` holds a real
+> mailbox in plaintext, committed to this repo and served on a public Pages
+> site. It can be scraped by anyone reading the page source, and anyone can POST
+> to that endpoint directly. Two ways to close it: point it at a dedicated
+> throwaway alias you can burn, or drop the notification feature and keep the
+> board fully local. The 5/minute cap only slows casual abuse through the page.
 
 ### Deliberate constraints
 

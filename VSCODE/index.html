@@ -3,6 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+  Content Security Policy. 'unsafe-inline' is unavoidable here — the whole
+  deliverable is one inline <style> and one inline <script> — but the rest of
+  the policy still pays for itself: default-src 'none' means an injected
+  <img>, <iframe> or <script src> loads nothing, and connect-src pins outbound
+  requests to the single FormSubmit host, so a successful HTML injection still
+  cannot beacon data anywhere else. form-action 'none' blocks a native form
+  POST (this form is always preventDefault()ed and submitted over fetch).
+
+  Note: frame-ancestors is deliberately absent — browsers ignore it in a meta
+  tag, and GitHub Pages cannot set response headers, so clickjacking cover
+  would need a real host. Say so rather than imply protection that isn't there.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'unsafe-inline';
+  style-src 'unsafe-inline';
+  connect-src https://formsubmit.co;
+  img-src data:;
+  form-action 'none';
+  base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+
 <title>UOB IT PMO — Project Board</title>
 
 <!--
@@ -17,6 +41,8 @@
    1. DESIGN TOKENS
    ============================================================ */
 :root {
+  color-scheme: light dark;
+
   /* Corporate blue palette */
   --blue-900: #0a2440;
   --blue-800: #0f3663;
@@ -31,23 +57,43 @@
   --surface: #ffffff;
   --surface-alt: #f7f9fc;
   --border: #d6dde8;
-  --border-strong: #b8c4d4;
+  --border-strong: #8496ae;   /* 3.02:1 on white — input/button edges must be visible */
+  --column-bg: #e6eaf1;
   --text: #16202e;
   --text-muted: #5b6b80;
+  --text-faint: #67748a;      /* 4.73:1 on white — the lightest text still allowed */
 
   /* Signal colours (always paired with text, never used alone) */
   --critical: #c62828;
   --critical-bg: #fdecec;
-  --high: #b25e00;
+  --high: #9a5200;
   --high-bg: #fdf1e3;
   --medium: #1560bd;
   --medium-bg: #e4eefb;
-  --low: #6b7789;
+  --low: #5b6b80;
   --low-bg: #eef1f5;
   --success: #1a7f4b;
   --success-bg: #e7f6ee;
   --warn: #a35b00;
   --warn-bg: #fdf3e5;
+
+  /* Signal borders + hovers, tokenised so the dark block can restate them */
+  --critical-border: #f2c4c4;
+  --high-border: #eed3ae;
+  --medium-border: #c2d9f5;
+  --low-border: #d5dae2;
+  --critical-hover: #a71f1f;
+  --success-text: #12603a;
+  --warn-text: #7d4600;
+
+  /* Chrome */
+  --backdrop: rgba(10, 28, 50, 0.55);
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: var(--blue-800);
+  --btn-primary-hover: var(--blue-050);
+  --on-accent: #ffffff;
+  --header-from: var(--blue-900);
+  --header-to: var(--blue-700);
 
   --focus: #2b7de0;
 
@@ -117,8 +163,8 @@ textarea:focus-visible,
    3. HEADER / WORDMARK / SUMMARY STRIP
    ============================================================ */
 .app-header {
-  background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--header-from) 0%, var(--header-to) 100%);
+  color: var(--on-accent);
   padding: var(--space-4) var(--space-5) var(--space-4);
   box-shadow: var(--shadow-md);
 }
@@ -220,16 +266,16 @@ textarea:focus-visible,
 .btn:hover { background: var(--surface-alt); }
 
 .btn-primary {
-  background: #fff;
-  color: var(--blue-800);
-  border-color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border-color: var(--btn-primary-bg);
   box-shadow: var(--shadow-sm);
 }
-.btn-primary:hover { background: var(--blue-050); }
+.btn-primary:hover { background: var(--btn-primary-hover); }
 
 .btn-submit {
   background: var(--blue-600);
-  color: #fff;
+  color: var(--on-accent);
   border-color: var(--blue-600);
   width: 100%;
   padding: var(--space-3) var(--space-4);
@@ -238,7 +284,7 @@ textarea:focus-visible,
 .btn-submit[disabled] {
   background: var(--border-strong);
   border-color: var(--border-strong);
-  color: #fff;
+  color: var(--on-accent);
   cursor: progress;
 }
 
@@ -305,7 +351,7 @@ textarea:focus-visible,
 }
 
 .column {
-  background: #e6eaf1;
+  background: var(--column-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   display: flex;
@@ -345,7 +391,7 @@ textarea:focus-visible,
   padding: 0 var(--space-2);
   border-radius: 999px;
   background: var(--blue-800);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 12px;
   font-weight: 700;
   display: inline-flex;
@@ -428,7 +474,7 @@ textarea:focus-visible,
   margin-bottom: var(--space-2);
 }
 .card-meta .meta-row { display: flex; gap: var(--space-2); }
-.card-meta .meta-key { flex: 0 0 62px; color: #8592a5; }
+.card-meta .meta-key { flex: 0 0 62px; color: var(--text-faint); }
 .card-meta .meta-val { color: var(--text); }
 
 .card-tags {
@@ -450,10 +496,10 @@ textarea:focus-visible,
   letter-spacing: .02em;
   border: 1px solid transparent;
 }
-.pill-critical { background: var(--critical-bg); color: var(--critical); border-color: #f2c4c4; }
-.pill-high     { background: var(--high-bg);     color: var(--high);     border-color: #eed3ae; }
-.pill-medium   { background: var(--medium-bg);   color: var(--medium);   border-color: #c2d9f5; }
-.pill-low      { background: var(--low-bg);      color: var(--low);      border-color: #d5dae2; }
+.pill-critical { background: var(--critical-bg); color: var(--critical); border-color: var(--critical-border); }
+.pill-high     { background: var(--high-bg);     color: var(--high);     border-color: var(--high-border); }
+.pill-medium   { background: var(--medium-bg);   color: var(--medium);   border-color: var(--medium-border); }
+.pill-low      { background: var(--low-bg);      color: var(--low);      border-color: var(--low-border); }
 
 .tag {
   display: inline-flex;
@@ -477,7 +523,7 @@ textarea:focus-visible,
   font-weight: 700;
   background: var(--critical-bg);
   color: var(--critical);
-  border: 1px solid #f2c4c4;
+  border: 1px solid var(--critical-border);
 }
 
 .card-actions {
@@ -503,7 +549,7 @@ textarea:focus-visible,
   align-items: center;
   justify-content: center;
 }
-.icon-btn:hover { background: var(--critical-bg); color: var(--critical); border-color: #f2c4c4; }
+.icon-btn:hover { background: var(--critical-bg); color: var(--critical); border-color: var(--critical-border); }
 
 /* Inline move menu (keyboard-accessible fallback for drag & drop) */
 .move-menu {
@@ -539,7 +585,7 @@ textarea:focus-visible,
   margin-top: var(--space-2);
   padding: var(--space-2);
   background: var(--critical-bg);
-  border: 1px solid #f2c4c4;
+  border: 1px solid var(--critical-border);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -551,10 +597,10 @@ textarea:focus-visible,
 .confirm-row .spacer { flex: 1 1 auto; }
 .btn-danger {
   background: var(--critical);
-  color: #fff;
+  color: var(--on-accent);
   border-color: var(--critical);
 }
-.btn-danger:hover { background: #a71f1f; border-color: #a71f1f; }
+.btn-danger:hover { background: var(--critical-hover); border-color: var(--critical-hover); }
 
 /* ============================================================
    8. MODAL / ADD TASK FORM
@@ -562,7 +608,7 @@ textarea:focus-visible,
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 28, 50, 0.55);
+  background: var(--backdrop);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -667,8 +713,8 @@ textarea:focus-visible,
   font-weight: 500;
   animation: toast-in .18s ease-out;
 }
-.toast-success { border-left-color: var(--success); background: var(--success-bg); color: #12603a; }
-.toast-warn    { border-left-color: var(--warn);    background: var(--warn-bg);    color: #7d4600; }
+.toast-success { border-left-color: var(--success); background: var(--success-bg); color: var(--success-text); }
+.toast-warn    { border-left-color: var(--warn);    background: var(--warn-bg);    color: var(--warn-text); }
 .toast-info    { border-left-color: var(--blue-600); background: var(--blue-050); color: var(--blue-800); }
 .toast-leaving { opacity: 0; transition: opacity .25s ease; }
 
@@ -709,6 +755,98 @@ textarea:focus-visible,
   .toast { animation: none; }
   .toast-leaving { transition: none; }
 }
+
+/* ============================================================
+   12. DARK THEME
+   Follows the operating system via prefers-color-scheme. There is no
+   toggle and no stored preference on purpose: this file is barred from
+   localStorage/sessionStorage/cookies, so a toggle could not survive the
+   refresh and would contradict the "nothing is saved" promise in the header.
+
+   Only tokens are restated below — no component rule is duplicated. The
+   values are desaturated tonal variants rather than inversions of the light
+   palette, and every text pair was measured: body >= 13:1, muted text >= 6.6:1,
+   every priority pill >= 6.6:1, focus ring and input borders >= 3:1 against
+   whichever surface sits behind them.
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Blues — lifted so they read as accents on a dark ground */
+    --blue-900: #07121f;
+    --blue-800: #2e6fbf;
+    --blue-700: #0d2b4c;
+    --blue-600: #2e6fbf;
+    --blue-500: #84bcff;
+    --blue-100: #1c3350;
+    --blue-050: #16283e;
+
+    /* Neutrals — card lifts off the column, column off the page */
+    --bg: #0f1520;
+    --column-bg: #131c29;
+    --surface: #1b2534;
+    --surface-alt: #222d3e;
+    --border: #2e3b4f;
+    --border-strong: #63758f;   /* 3.29:1 on the card — keeps inputs identifiable */
+    --text: #e8edf5;
+    --text-muted: #a7b4c6;
+    --text-faint: #a7b4c6;      /* faint tier collapses into muted; dark has less room */
+
+    /* Signals — lighter tonal variants on deep tinted grounds */
+    --critical: #ff9c9c;
+    --critical-bg: #3b2024;
+    --high: #f2ac57;
+    --high-bg: #3a2b16;
+    --medium: #84bcff;
+    --medium-bg: #16283e;
+    --low: #aab6c8;
+    --low-bg: #242e3d;
+    --success: #5fd79a;
+    --success-bg: #11301f;
+    --warn: #f3b45f;
+    --warn-bg: #33260f;
+
+    --critical-border: #6b3238;
+    --high-border: #5d4523;
+    --medium-border: #2b4a70;
+    --low-border: #3a4658;
+    --critical-hover: #ffb8b8;
+    --success-text: #5fd79a;
+    --warn-text: #f3b45f;
+
+    --backdrop: rgba(3, 8, 16, 0.72);
+    --btn-primary-bg: #e8edf5;
+    --btn-primary-text: #0d2b4c;
+    --btn-primary-hover: #ffffff;
+    --on-accent: #ffffff;
+    --header-from: #07121f;
+    --header-to: #0d2b4c;
+
+    --focus: #6cb2ff;
+
+    /* Shadows carry less weight on dark; lean on the borders instead */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.65);
+  }
+
+  /* The header's translucent whites need a touch more opacity on a darker
+     ground to hold 4.5:1 (measured 9.2:1 and 9.7:1 at these values). */
+  .brand-sub { color: rgba(255, 255, 255, 0.78); }
+  .demo-note { color: rgba(255, 255, 255, 0.80); }
+  .stat-label { color: rgba(255, 255, 255, 0.88); }
+  .stat { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.16); }
+  .stat-total { background: rgba(255, 255, 255, 0.16); }
+  .stat-overdue { background: rgba(255, 138, 138, 0.18); border-color: rgba(255, 156, 156, 0.45); }
+
+  /* Accent-filled controls take dark text: #0f1520 on #84bcff is 9.25:1,
+     where white on the same fill would be only 2.2:1. */
+  .count-badge, .btn-submit { color: #0f1520; }
+  .count-badge { background: var(--blue-500); }
+  .btn-submit { background: var(--blue-500); border-color: var(--blue-500); }
+  .btn-submit:hover { background: #a8cfff; border-color: #a8cfff; }
+
+  .card-actions { border-top-color: var(--border); }
+}
 </style>
 </head>
 
@@ -738,7 +876,8 @@ textarea:focus-visible,
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3.4a1 1 0 110 2 1 1 0 010-2zM9 12H7V7h2v5z"/>
     </svg>
-    <span>Demo data only — the board is held in memory. Refreshing the page resets it to the eight seeded tasks. Nothing is saved to this device.</span>
+    <span>Demo data only — the board is held in memory. Refreshing the page resets it to the eight seeded tasks. Nothing is saved to this device, but
+      <strong>each new task you create is emailed to the board owner</strong> through a third-party form service, so do not enter real customer, vendor or personal data.</span>
   </p>
 </header>
 
@@ -931,8 +1070,23 @@ const state = {
   nextId: 1,                 // next numeric part of UOB-ITPM-####
   confirmingDelete: null,    // task id currently showing "Delete? Yes / No"
   openMoveMenu: null,        // task id currently showing the Move menu
-  refocus: null              // data-focus key to restore focus to after a render
+  refocus: null,             // data-focus key to restore focus to after a render
+  sendTimes: []              // epoch ms of recent notifications — in-memory rate limit
 };
+
+/* Outbound notifications are capped per page session. This is an abuse-blast
+   limiter, not a security control: it lives in memory, resets on refresh, and
+   cannot stop anyone POSTing to the FormSubmit endpoint directly. It exists so
+   that a stuck key or a bored visitor on the public demo cannot turn the board
+   into a mail bomb aimed at the owner's inbox. */
+const SEND_LIMIT = 5;
+const SEND_WINDOW_MS = 60000;
+
+function sendAllowance() {
+  const cutoff = Date.now() - SEND_WINDOW_MS;
+  state.sendTimes = state.sendTimes.filter(function (t) { return t > cutoff; });
+  return SEND_LIMIT - state.sendTimes.length;
+}
 
 /* Cached element references (containers only — contents come from render) */
 const els = {
@@ -1581,7 +1735,17 @@ function handleSubmit(event) {
   const task = addTask(data);
   showToast("Task " + task.id + " added to " + task.status + ".", "success");
 
-  /* 2. Notification runs in parallel; a failure must never break the board */
+  /* 2. Notification runs in parallel; a failure must never break the board.
+        Over the session cap the card still lands — only the email is dropped. */
+  if (sendAllowance() <= 0) {
+    showToast("Card added. Email notification skipped — " + SEND_LIMIT +
+      " per minute limit reached.", "warn");
+    resetForm();
+    closeModal();
+    return;
+  }
+  state.sendTimes.push(Date.now());
+
   inFlight += 1;
   setSubmitting(true);
 

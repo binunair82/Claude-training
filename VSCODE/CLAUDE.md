@@ -36,6 +36,27 @@ These are verified, and each one silently blocks an obvious approach:
 - **No persistence, deliberately.** No `localStorage`, `sessionStorage`, IndexedDB, or cookies. A refresh resetting the board to the 8 seeded tasks is *intended behaviour*, and the header says so. Do not "fix" this.
 - Must work opened directly from `file://` by double-clicking.
 
+### Theming
+
+The board ships light and dark palettes. Dark follows the OS through
+`@media (prefers-color-scheme: dark)` — **there is no toggle, on purpose**: the
+no-persistence rule above bars the storage a toggle would need, so a preference
+could not survive a refresh and would contradict the "nothing is saved" promise
+in the header. A session-only toggle is possible but was judged worse than
+following the OS.
+
+Section 12 of the stylesheet restates **tokens only** — no component rule is
+duplicated across themes. Anything new must therefore reach for a token rather
+than a literal colour, or it will look correct in one theme and wrong in the
+other. `color-scheme: light dark` on `:root` is what makes the native date
+picker, selects and scrollbars follow along.
+
+Both palettes are contrast-verified: body text ≥ 13:1 dark / ≥ 16:1 light, muted
+text ≥ 5.4:1, every priority pill ≥ 4.8:1, and focus rings plus input borders
+≥ 3:1 against whichever surface sits behind them. Re-measure after changing any
+colour — the light palette previously shipped three pairs below 4.5:1
+(`.meta-key`, `.pill-low`, `.pill-high`) and an input border at 1.77:1.
+
 ### Architecture
 
 A single `state` object is the source of truth, and **all card markup is produced by `renderBoard()`**. Nothing outside the render path mutates card contents.
@@ -47,6 +68,30 @@ Because every card is rebuilt on each render, **all board events are delegated**
 Two documented exceptions to "no DOM mutation outside render": the `.drag-over` highlight class on a column, and toast insertion into its own live region.
 
 Every user-supplied string goes through `escapeHtml()` before reaching `innerHTML`, including quoted attribute values.
+
+### Security posture
+
+- A **Content-Security-Policy meta tag** sits in `<head>`. `'unsafe-inline'` is
+  unavoidable (one inline `<style>`, one inline `<script>`), but `default-src
+  'none'` plus `connect-src https://formsubmit.co` means an injected `<img>`,
+  `<iframe>` or `<script src>` loads nothing and cannot beacon data out. Verified
+  in-browser: FormSubmit allowed, every other host blocked. Adding any new
+  outbound host means editing the policy too.
+- `frame-ancestors` is deliberately **absent** — meta-tag CSP ignores it and
+  GitHub Pages cannot set headers, so clickjacking cover would need a real host.
+  Do not add it and imply protection that is not there.
+- Outbound notifications are capped in memory at `SEND_LIMIT` per
+  `SEND_WINDOW_MS` (5/minute). This is an abuse limiter, **not** a security
+  control: it resets on refresh and cannot stop anyone POSTing to the endpoint
+  directly. It exists so the public demo cannot be turned into a mail bomb.
+- `escapeHtml()` covers `& < > " '` and every interpolation into `innerHTML`
+  passes through it, with all attribute values quoted. This is the primary XSS
+  defence; the CSP is the backstop.
+
+**Open issue — the notification address is public.** `FORMSUBMIT_ENDPOINT`
+contains a real mailbox in plaintext, committed to a public repo and served on
+a public Pages site, where it is harvestable and can be POSTed to by anyone.
+See the README for the two options (dedicated alias, or drop the feature).
 
 ### FormSubmit
 
