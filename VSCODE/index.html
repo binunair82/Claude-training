@@ -745,6 +745,75 @@ textarea:focus-visible,
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Congratulation popup — centred, unlike the new-task modal which sits
+   at the top of the viewport. Sits above that modal's backdrop (50) but
+   below the confetti (90), so the burst flies in front of it. */
+.celebrate-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  z-index: 60;
+}
+.celebrate-backdrop[hidden] { display: none; }
+
+.celebrate {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  text-align: center;
+  animation: celebrate-in .22s cubic-bezier(.2, .8, .3, 1);
+}
+
+.celebrate-emoji { font-size: 44px; line-height: 1; margin-bottom: var(--space-3); }
+.celebrate-title { margin: 0 0 var(--space-2); font-size: 19px; font-weight: 700; }
+.celebrate-body {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;    /* a long task title must not widen the popup */
+}
+
+@keyframes celebrate-in {
+  from { opacity: 0; transform: translateY(10px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Confetti — a short burst over a card that has just reached Done.
+   Each piece is positioned by JS and carries its own trajectory in
+   custom properties, so one keyframe serves the whole burst. */
+.confetti-piece {
+  position: fixed;
+  z-index: 90;                 /* over the board, under toasts (100) */
+  pointer-events: none;
+  border-radius: 1px;
+  will-change: transform, opacity;
+  animation: confetti-fly var(--dur) cubic-bezier(.2, .6, .5, 1) forwards;
+}
+
+/* Three stops give a real arc: up and out, then falling past the card. */
+@keyframes confetti-fly {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  45% {
+    opacity: 1;
+    transform: translate3d(calc(var(--dx) * .55), var(--peak), 0)
+               rotate(calc(var(--rot) * .5));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot));
+  }
+}
+
 /* ============================================================
    10. FOOTER
    ============================================================ */
@@ -776,6 +845,8 @@ textarea:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .toast { animation: none; }
   .toast-leaving { transition: none; }
+  .confetti-piece { display: none; }   /* JS also skips the burst; belt and braces */
+  .celebrate { animation: none; }      /* popup still shows, it just does not move */
 }
 
 /* ============================================================
@@ -1156,6 +1227,18 @@ textarea:focus-visible,
 <!-- Toast region — announced politely to assistive technology -->
 <div class="toast-region" id="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
 
+<!-- Congratulation popup — shown when a task reaches Done.
+     alertdialog so assistive technology announces it on open. -->
+<div class="celebrate-backdrop" id="celebrate-backdrop" hidden>
+  <div class="celebrate" role="alertdialog" aria-modal="true"
+       aria-labelledby="celebrate-title" aria-describedby="celebrate-body" id="celebrate">
+    <div class="celebrate-emoji" aria-hidden="true">&#127881;</div>
+    <h2 class="celebrate-title" id="celebrate-title">Task complete</h2>
+    <p class="celebrate-body" id="celebrate-body"></p>
+    <button type="button" class="btn btn-primary" id="celebrate-dismiss">Thanks!</button>
+  </div>
+</div>
+
 <!--
   FORMSUBMIT ACTIVATION (one time, per recipient address)
   ------------------------------------------------------
@@ -1281,7 +1364,10 @@ const els = {
   closeBtn: document.getElementById("modal-close-btn"),
   filterForm: document.getElementById("filter-form"),
   clearFiltersBtn: document.getElementById("clear-filters-btn"),
-  themeBtn: document.getElementById("theme-btn")
+  themeBtn: document.getElementById("theme-btn"),
+  celebrateBackdrop: document.getElementById("celebrate-backdrop"),
+  celebrateBody: document.getElementById("celebrate-body"),
+  celebrateDismiss: document.getElementById("celebrate-dismiss")
 };
 
 /* ============================================================
@@ -1694,6 +1780,146 @@ function showToast(message, kind) {
 }
 
 /* ============================================================
+   CELEBRATION — confetti burst when a task reaches Done
+   ============================================================ */
+const CONFETTI_COLOURS = [
+  "var(--success)", "var(--blue-600)", "var(--warn)",
+  "var(--high)", "var(--medium)", "var(--critical)"
+];
+const CONFETTI_PIECES = 18;
+
+function prefersReducedMotion() {
+  return window.matchMedia
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/* Burst from the visible part of the card, or from the Done column if the
+   card is not in the DOM (a filter may be hiding it). Silently does nothing
+   if neither is present, so a celebration never breaks a move.
+
+   The card is often taller than the viewport or scrolled half out of it, so
+   anchoring on the raw rect centre can throw the burst into a corner or off
+   screen entirely. Clip the rect to the viewport first, then clamp, so the
+   confetti always appears over something the user can actually see. */
+const CONFETTI_MARGIN = 24;
+
+function confettiOrigin(id) {
+  const cards = document.querySelectorAll(".card");
+  let card = null;
+  for (let i = 0; i < cards.length && !card; i++) {
+    if (cards[i].getAttribute("data-id") === id) card = cards[i];
+  }
+
+  const anchor = card || document.querySelector('.column[data-status="Done"]');
+  if (!anchor) return null;
+
+  const box = anchor.getBoundingClientRect();
+  const viewW = window.innerWidth;
+  const viewH = window.innerHeight;
+
+  /* Vertical band of the card that is actually on screen. */
+  const top = Math.max(box.top, 0);
+  const bottom = Math.min(box.bottom, viewH);
+
+  const y = bottom > top
+    ? top + Math.min((bottom - top) / 2, 60)   /* near the top of what is visible */
+    : box.top;                                  /* wholly off screen: clamp below */
+
+  const clamp = function (value, max) {
+    return Math.max(CONFETTI_MARGIN, Math.min(value, max - CONFETTI_MARGIN));
+  };
+
+  return { x: clamp(box.left + box.width / 2, viewW), y: clamp(y, viewH) };
+}
+
+function burstConfetti(id) {
+  if (prefersReducedMotion()) return;
+
+  const origin = confettiOrigin(id);
+  if (!origin) return;
+
+  const rand = function (min, max) { return min + Math.random() * (max - min); };
+
+  for (let i = 0; i < CONFETTI_PIECES; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.setAttribute("aria-hidden", "true");   // decorative: never announced
+
+    const width = rand(5, 9);
+    piece.style.width = width + "px";
+    piece.style.height = rand(8, 14) + "px";
+    piece.style.left = (origin.x - width / 2) + "px";
+    piece.style.top = origin.y + "px";
+    piece.style.background = CONFETTI_COLOURS[i % CONFETTI_COLOURS.length];
+
+    piece.style.setProperty("--dx", rand(-110, 110).toFixed(1) + "px");
+    piece.style.setProperty("--peak", rand(-90, -40).toFixed(1) + "px");
+    piece.style.setProperty("--dy", rand(70, 160).toFixed(1) + "px");
+    piece.style.setProperty("--rot", rand(-420, 420).toFixed(0) + "deg");
+    piece.style.setProperty("--dur", rand(750, 1150).toFixed(0) + "ms");
+
+    document.body.appendChild(piece);
+
+    /* Remove on animationend; the timeout is a fallback for the case where
+       the animation never runs (background tab, display:none) so pieces
+       can never accumulate in the DOM. */
+    const remove = function () {
+      if (piece.parentNode) piece.parentNode.removeChild(piece);
+    };
+    piece.addEventListener("animationend", remove, { once: true });
+    window.setTimeout(remove, 2000);
+  }
+}
+
+/* CONGRATULATION POPUP */
+const CELEBRATE_AUTO_CLOSE = 6000;
+let celebrateTimer = null;
+let lastFocusedBeforeCelebrate = null;
+
+function showCelebration(task) {
+  els.celebrateBody.textContent = task.id + " — " + task.title;
+
+  lastFocusedBeforeCelebrate = document.activeElement;
+  els.celebrateBackdrop.hidden = false;
+  els.celebrateDismiss.focus();
+
+  /* Auto-close so the popup never blocks a run of quick moves, but a click
+     or Escape closes it sooner. */
+  window.clearTimeout(celebrateTimer);
+  celebrateTimer = window.setTimeout(closeCelebration, CELEBRATE_AUTO_CLOSE);
+}
+
+function closeCelebration() {
+  if (els.celebrateBackdrop.hidden) return;
+  window.clearTimeout(celebrateTimer);
+  els.celebrateBackdrop.hidden = true;
+
+  /* Return focus where it was, but only if that element is still in the
+     document — renderBoard() replaces the card buttons on every move, so the
+     previously focused button is usually gone. Focusing a detached node
+     throws focus to <body>, which is the sensible fallback anyway. */
+  const previous = lastFocusedBeforeCelebrate;
+  lastFocusedBeforeCelebrate = null;
+  if (previous && document.contains(previous) && typeof previous.focus === "function") {
+    previous.focus();
+  }
+}
+
+/* Single path for every move, from the Move menu and from drag-and-drop,
+   so both routes celebrate and report identically. */
+function applyMove(id, newStatus) {
+  const result = moveTask(id, newStatus);
+  if (!result) return;
+
+  if (newStatus === "Done") {
+    showCelebration(result.task);
+    burstConfetti(id);
+  } else {
+    showToast(id + " moved from " + result.from + " to " + newStatus + ".", "info");
+  }
+}
+
+/* ============================================================
    FORMSUBMIT — AJAX JSON endpoint, never a page-navigating POST
    ============================================================ */
 async function notifyNewTask(task) {
@@ -1969,8 +2195,7 @@ function handleBoardClick(event) {
 
   } else if (action === "move-to") {
     const status = trigger.getAttribute("data-status");
-    const result = moveTask(id, status);
-    if (result) showToast(id + " moved from " + result.from + " to " + status + ".", "info");
+    applyMove(id, status);
 
   } else if (action === "move-cancel") {
     state.openMoveMenu = null;
@@ -2052,8 +2277,7 @@ function handleDrop(event) {
   const status = column.getAttribute("data-status");
   clearDropHighlights();
 
-  const result = moveTask(id, status);
-  if (result) showToast(id + " moved from " + result.from + " to " + status + ".", "info");
+  applyMove(id, status);
 }
 
 /* ============================================================
@@ -2109,6 +2333,24 @@ function bindEvents() {
     if (els.backdrop.hidden) return;
     if (event.key === "Escape") { closeModal(); return; }
     trapFocus(event);
+  });
+
+  /* Congratulation popup — dismissed by the button, a click on the backdrop,
+     or Escape. Its own handler: the new-task modal's returns early whenever
+     that modal is closed, which is exactly when this one is open. */
+  els.celebrateDismiss.addEventListener("click", closeCelebration);
+  els.celebrateBackdrop.addEventListener("mousedown", function (event) {
+    if (event.target === els.celebrateBackdrop) closeCelebration();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (els.celebrateBackdrop.hidden) return;
+    if (event.key === "Escape") { closeCelebration(); return; }
+    /* Only one control in here, so keep Tab on it rather than letting focus
+       escape to the board behind the backdrop. */
+    if (event.key === "Tab") {
+      event.preventDefault();
+      els.celebrateDismiss.focus();
+    }
   });
 
   /* Form */
