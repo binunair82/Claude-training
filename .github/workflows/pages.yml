@@ -1,0 +1,49 @@
+name: Deploy VSCODE/ to GitHub Pages
+
+# GitHub Pages can only serve a branch root or /docs directly. To publish
+# VSCODE/ without moving it, this workflow uploads that folder as the Pages
+# artifact, which makes VSCODE/index.html the site root.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "VSCODE/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        # enablement:true switches the repo's Pages source to GitHub Actions
+        # on the first run, so no manual step in Settings is needed.
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload VSCODE/ as the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: VSCODE
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
