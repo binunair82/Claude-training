@@ -8,9 +8,12 @@ double-clicking the file.
 
 ## Screenshots
 
-The Kanban board at [/VSCODE/](https://binunair82.github.io/Claude-training/VSCODE/):
+The Kanban board at [/VSCODE/](https://binunair82.github.io/Claude-training/VSCODE/),
+which follows the operating system's light or dark setting:
 
-![UOB IT PMO Project Board — four columns of task cards with filters and a board summary](docs/screenshots/kanban-board.png)
+![UOB IT PMO Project Board in light mode — four columns of task cards with filters and a board summary](docs/screenshots/kanban-board.png)
+
+![The same board in dark mode, with the same layout on a deep navy ground](docs/screenshots/kanban-board-dark.png)
 
 The landing page at the repository root:
 
